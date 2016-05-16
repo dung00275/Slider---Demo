@@ -250,32 +250,36 @@ public class SliderCustomWalletView: UIView {
     public func gestureValueChange(gesture: UIPanGestureRecognizer) {
         let translation = gesture.translationInView(self)
         print("Translation  : \(translation.x)")
-        let smoothValue:CGFloat = 60
+        
         switch gesture.state {
         case .Changed:
-            if leftThumConstraint.constant + widthThumb + translation.x / smoothValue > self.bounds.width {
-                status = Status.On
-                leftThumConstraint.constant = self.bounds.width - widthThumb
-               
-            }else if leftThumConstraint.constant + translation.x / smoothValue < 0 {
-                status = Status.Off
-                leftThumConstraint.constant = 0
-            }else {
-                status = Status.OnChange
-                leftThumConstraint.constant += translation.x / smoothValue
+            defer {
+                gesture.setTranslation(CGPointZero, inView: gesture.view)
             }
+            if leftThumConstraint.constant + translation.x + widthThumb >= self.bounds.width{
+                status = .On
+            }else if leftThumConstraint.constant +  translation.x + widthThumb <= 0 {
+                status = .Off
+            }else {
+                status = .OnChange
+                
+            }
+            leftThumConstraint.constant += translation.x
             
-            print("Changing : \(leftThumConstraint.constant)")
-        case .Ended:
+        case .Ended, .Cancelled:
             var valueEnd: CGFloat = 0
             if leftThumConstraint.constant + widthThumb >= CGRectGetMidX(self.bounds) {
                 status = Status.On
                 valueEnd = self.bounds.width - widthThumb
-            }else {status = Status.Off}
-            UIView.animateWithDuration(0.2, animations: { 
+            } else {
+                status = Status.Off
+            }
+            
+            UIView.animateWithDuration(0.2, animations: {
                 self.leftThumConstraint.constant = valueEnd
                 self.layoutIfNeeded()
                 }, completion: nil)
+            
         default:
             break
         }
